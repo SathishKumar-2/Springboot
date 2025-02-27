@@ -1,0 +1,26 @@
+name: PR Method Change Checker
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check_methods:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: pip install requests PyGithub
+
+      - name: Run Method Change Checker
+        run: python check_methods.py ${{ github.event.pull_request.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
