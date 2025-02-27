@@ -8,6 +8,5 @@ import org.springframework.stereotype.Repository;
 public class LaptopRepo {
     public void save(Laptop lap) {
         System.out.println("Saved in DB");
-        System.out.println("Saved in DB");
     }
 }

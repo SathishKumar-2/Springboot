@@ -2,6 +2,7 @@ import sys
 import os
 import requests
 import re
+import pandas as pd
 
 # Get GitHub Token & Repository Name from Environment Variables
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -22,6 +23,11 @@ if len(sys.argv) < 2:
 
 PR_NUMBER = sys.argv[1]
 print(f"PR number provided: {PR_NUMBER}")
+
+# Load method mappings from CSV
+method_df = pd.read_csv("data/Method.csv", header=None, names=["unique_identifier", "method"])  # Unique identifier → Method
+testcase_df = pd.read_csv("data/Testcases.csv", header=None, names=["unique_identifier", "testcase"])  # Unique identifier → Test case
+method_vs_testcase_df = pd.read_csv("data/Embedding.csv", header=None, names=["method_id", "testcase_id(s)"])  # Mappings
 
 # Fetch PR changes from GitHub
 def get_pr_changes(repo_name, pr_number):
@@ -93,13 +99,41 @@ def extract_fully_qualified_methods(patch, file_path):
 
     return fully_qualified_methods
 
+# Get corresponding test cases
+def get_related_test_cases(changed_methods):
+    method_to_tests = {}
+
+    for method in changed_methods:
+        # Find unique identifier of method
+        method_row = method_df[method_df['method'] == method]
+        if method_row.empty:
+            print(f"⚠️ Warning: No matching method found for `{method}` in `method.csv`")
+            continue
+
+        method_id = method_row.iloc[0]['unique_identifier']
+
+        # Find test cases for method_id in methodvstestcase.csv
+        test_row = method_vs_testcase_df[method_vs_testcase_df['method_id'] == method_id]
+        if test_row.empty:
+            print(f"⚠️ Warning: No test cases found for `{method}` (ID: {method_id}) in `methodvstestcase.csv`")
+            continue
+
+        testcase_ids = test_row.iloc[0]['testcase_id(s)'].split('_')
+
+        # Fetch actual test case names
+        test_cases = testcase_df[testcase_df['unique_identifier'].isin(testcase_ids)]['testcase'].tolist()
+        method_to_tests[method] = test_cases
+
+    return method_to_tests
 
 # Process PR
 changed_methods = get_pr_changes(REPO_NAME, PR_NUMBER)
 
 if changed_methods:
-    print("### 🔍 Changed Methods in PR:")
-    for method in changed_methods:
-        print(f"🔹 `{method}`")
+    print("\n### 🔍 Changed Methods & Associated Test Cases:")
+    method_test_cases = get_related_test_cases(changed_methods)
+
+    for method, testcases in method_test_cases.items():
+        print(f"🔹 `{method}` → 🧪 Test Cases: {', '.join(testcases) if testcases else 'None found'}")
 else:
     print("✅ No changed methods found.")
