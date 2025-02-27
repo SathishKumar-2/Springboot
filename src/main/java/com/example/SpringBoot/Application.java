@@ -10,9 +10,10 @@ import org.springframework.context.ApplicationContext;
 public class Application {
 	public static void main(String[] args) {
 
-		ApplicationContext context=SpringApplication.run(Application.class, args);
-		Service service=context.getBean(Service.class);
-		Laptop laptop=context.getBean(Laptop.class);
+		ApplicationContext context = SpringApplication.run(Application.class, args);
+		Service service = context.getBean(Service.class);
+		Laptop laptop = context.getBean(Laptop.class);
+		// hi
 		service.addLaptop(laptop);
 	}
 
