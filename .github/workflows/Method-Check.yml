@@ -21,7 +21,7 @@ jobs:
         run: pip install requests PyGithub pandas
 
       - name: Run Method Change Checker
-        run: python scripts/check_methods.py ${{ github.event.pull_request.number }}
+        run: python check_methods.py ${{ github.event.pull_request.number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}  # Auto-sets 'owner/repo'
