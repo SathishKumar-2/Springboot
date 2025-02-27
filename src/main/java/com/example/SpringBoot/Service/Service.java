@@ -12,5 +12,6 @@ public class Service {
     public void addLaptop(Laptop lap) {
         // hi hell
         laptopRepo.save(lap);
+        laptopRepo.save(lap);
     }
 }
