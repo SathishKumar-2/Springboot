@@ -4,7 +4,7 @@ import requests
 import re
 from github import Github
 
-# Get GitHub Token & Repository Name from Environment Variables
+# Get GitHub Token & Repository Name from Environment Variable
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_NAME = os.getenv("GITHUB_REPOSITORY")  # Automatically gets 'owner/repo'
 
