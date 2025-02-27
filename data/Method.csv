@@ -1,0 +1,5 @@
+M001,com.example.SpringBoot.Application.main()
+M002,com.example.controller.UserController.createUser()
+M003,com.example.service.OrderService.processOrder()
+M004,com.example.controller.OrderController.cancelOrder()
+M005,com.example.service.PaymentService.processPayment()
