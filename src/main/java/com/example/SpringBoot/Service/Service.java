@@ -6,10 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @org.springframework.stereotype.Service
 public class Service {
-@Autowired
+    @Autowired
+    // hi
     private LaptopRepo laptopRepo;
-    public void addLaptop(Laptop lap){
+
+    public void addLaptop(Laptop lap) {
         laptopRepo.save(lap);
     }
 }
-
