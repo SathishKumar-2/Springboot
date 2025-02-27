@@ -10,7 +10,7 @@ public class Service {
     private LaptopRepo laptopRepo;
 
     public void addLaptop(Laptop lap) {
-        // hi
+        // hi hello
         laptopRepo.save(lap);
     }
 }
