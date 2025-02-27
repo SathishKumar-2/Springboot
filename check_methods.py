@@ -50,12 +50,12 @@ def extract_fully_qualified_methods(patch, file_path):
     class_pattern = re.compile(r"\bclass\s+(\w+)")  # Extracts class name
     method_pattern = re.compile(r"\b(public|private|protected|static|\s)*\s*[\w<>]+\s+(\w+)\s*\(")
 
-    methods = set()
-    inside_method = None
-    method_lines = {}
     package_name = None
     class_name = None
+    inside_method = None
+    method_changes = {}  # {method_name: has_changes}
 
+    # Track package & class name
     for line in patch.split("\n"):
         if package_name is None:
             package_match = package_pattern.search(line)
@@ -67,24 +67,23 @@ def extract_fully_qualified_methods(patch, file_path):
             if class_match:
                 class_name = class_match.group(1)
 
-        if line.startswith("+"):  # Added lines
+    # Track method changes
+    for line in patch.split("\n"):
+        if line.startswith("+") or line.startswith("-"):  # Detect changed lines
             match = method_pattern.search(line)
             if match:
-                inside_method = match.group(2)
-                method_lines[inside_method] = False
+                inside_method = match.group(2)  # Extract method name
+                method_changes[inside_method] = False  # Initialize as unchanged
             elif inside_method:
-                method_lines[inside_method] = True  # Change inside method
+                method_changes[inside_method] = True  # Mark method as changed
 
-        elif line.startswith("-") and inside_method:
-            method_lines[inside_method] = True  # Change inside method
-
-        if inside_method and line.strip() == "}":
+        if inside_method and line.strip() == "}":  # Exit method
             inside_method = None
 
     # Construct fully qualified method names
     fully_qualified_methods = []
-    for method, changed in method_lines.items():
-        if changed:
+    for method, changed in method_changes.items():
+        if changed and package_name and class_name:
             fq_method = f"{package_name}.{class_name}.{method}()"
             fully_qualified_methods.append(fq_method)
 
