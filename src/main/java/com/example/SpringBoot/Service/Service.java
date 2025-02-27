@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 @org.springframework.stereotype.Service
 public class Service {
     @Autowired
-    // hi
     private LaptopRepo laptopRepo;
 
     public void addLaptop(Laptop lap) {
