@@ -2,11 +2,10 @@ import sys
 import os
 import requests
 import re
-from github import Github
 
-# Get GitHub Token & Repository Name from Environment Variable
+# Get GitHub Token & Repository Name from Environment Variables
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-REPO_NAME = os.getenv("GITHUB_REPOSITORY")  # Automatically gets 'owner/repo'
+REPO_NAME = os.getenv("GITHUB_REPOSITORY")  # 'owner/repo'
 
 if not GITHUB_TOKEN:
     print("❌ Error: GITHUB_TOKEN is not set!")
@@ -22,7 +21,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 PR_NUMBER = sys.argv[1]
-print("PR number provided!"+PR_NUMBER)
+print(f"PR number provided: {PR_NUMBER}")
 
 # Fetch PR changes from GitHub
 def get_pr_changes(repo_name, pr_number):
@@ -40,52 +39,54 @@ def get_pr_changes(repo_name, pr_number):
     for file in files:
         if file['filename'].endswith(".java"):  # Only Java files
             patch = file.get('patch', '')
-            methods = extract_fully_qualified_methods(patch, file['filename'])
+            file_path = file['filename']
+            methods = extract_fully_qualified_methods(patch, file_path)
             changed_methods.extend(methods)
 
     return changed_methods
 
+# Convert file path to package.class dynamically
+def get_fully_qualified_class(file_path):
+    file_path = re.sub(r"^src/main/java/|^src/", "", file_path)
+    return file_path.replace("/", ".").replace(".java", "")
+
 # Extract method names from Git diff
 def extract_fully_qualified_methods(patch, file_path):
-    package_pattern = re.compile(r"^\s*package\s+([\w\.]+);")  # Extracts package name
-    class_pattern = re.compile(r"\bclass\s+(\w+)")  # Extracts class name
+    package_class_name = get_fully_qualified_class(file_path)
+    
     method_pattern = re.compile(r"\b(public|private|protected|static|\s)*\s*[\w<>]+\s+(\w+)\s*\(")
 
-    package_name = None
-    class_name = None
     inside_method = None
     method_changes = {}  # {method_name: has_changes}
+    method_indent = None  # Tracks the indentation level of the method
 
-    # Track package & class name
     for line in patch.split("\n"):
-        if package_name is None:
-            package_match = package_pattern.search(line)
-            if package_match:
-                package_name = package_match.group(1)
+        if line.startswith("+++ ") or line.startswith("--- "):  # Ignore file metadata
+            continue
 
-        if class_name is None:
-            class_match = class_pattern.search(line)
-            if class_match:
-                class_name = class_match.group(1)
+        # Detect method header
+        match = method_pattern.search(line)
+        if match:
+            inside_method = match.group(2)  # Extract method name
+            method_changes[inside_method] = False  # Initially mark as unchanged
+            method_indent = len(line) - len(line.lstrip())  # Get indentation level
 
-    # Track method changes
-    for line in patch.split("\n"):
-        if line.startswith("+") or line.startswith("-"):  # Detect changed lines
-            match = method_pattern.search(line)
-            if match:
-                inside_method = match.group(2)  # Extract method name
-                method_changes[inside_method] = False  # Initialize as unchanged
-            elif inside_method:
-                method_changes[inside_method] = True  # Mark method as changed
+        # If inside a method, check for modifications
+        elif inside_method and (line.startswith("+") or line.startswith("-")):
+            # Check if change is inside the method (ignoring empty lines)
+            if len(line.strip()) > 1 and (len(line) - len(line.lstrip())) > method_indent:
+                method_changes[inside_method] = True  # Mark as changed
 
-        if inside_method and line.strip() == "}":  # Exit method
+        # Exit method when encountering '}'
+        if inside_method and line.strip() == "}":
             inside_method = None
+            method_indent = None
 
     # Construct fully qualified method names
     fully_qualified_methods = []
     for method, changed in method_changes.items():
-        if changed and package_name and class_name:
-            fq_method = f"{package_name}.{class_name}.{method}()"
+        if changed:
+            fq_method = f"{package_class_name}.{method}()"
             fully_qualified_methods.append(fq_method)
 
     return fully_qualified_methods
