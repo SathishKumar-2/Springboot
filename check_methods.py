@@ -55,10 +55,10 @@ def extract_fully_qualified_methods(patch, file_path):
     package_class_name = get_fully_qualified_class(file_path)
     
     method_pattern = re.compile(r"\b(public|private|protected|static|\s)*\s*[\w<>]+\s+(\w+)\s*\(")
-
+    
     inside_method = None
     method_changes = {}  # {method_name: has_changes}
-    method_indent = None  # Tracks the indentation level of the method
+    brace_count = 0  # Tracks the number of `{}` braces
 
     for line in patch.split("\n"):
         if line.startswith("+++ ") or line.startswith("--- "):  # Ignore file metadata
@@ -69,18 +69,20 @@ def extract_fully_qualified_methods(patch, file_path):
         if match:
             inside_method = match.group(2)  # Extract method name
             method_changes[inside_method] = False  # Initially mark as unchanged
-            method_indent = len(line) - len(line.lstrip())  # Get indentation level
+            brace_count = 0  # Reset brace count when entering a method
 
-        # If inside a method, check for modifications
-        elif inside_method and (line.startswith("+") or line.startswith("-")):
-            # Check if change is inside the method (ignoring empty lines)
-            if len(line.strip()) > 1 and (len(line) - len(line.lstrip())) > method_indent:
+        # Track changes inside a method
+        if inside_method and (line.startswith("+") or line.startswith("-")):
+            # Ensure the change is inside the method (by checking brace count)
+            if brace_count > 0:
                 method_changes[inside_method] = True  # Mark as changed
 
-        # Exit method when encountering '}'
-        if inside_method and line.strip() == "}":
+        # Track opening/closing braces `{}` to ensure we're inside a method
+        brace_count += line.count("{") - line.count("}")
+
+        # Exit method when braces close
+        if inside_method and brace_count == 0:
             inside_method = None
-            method_indent = None
 
     # Construct fully qualified method names
     fully_qualified_methods = []
