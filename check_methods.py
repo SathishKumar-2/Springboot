@@ -25,9 +25,9 @@ PR_NUMBER = sys.argv[1]
 print(f"PR number provided: {PR_NUMBER}")
 
 # Load method mappings from CSV
-method_df = pd.read_csv("data/Method.csv")  # Unique identifier → Method
-testcase_df = pd.read_csv("data/Testcases.csv")  # Unique identifier → Test case
-method_vs_testcase_df = pd.read_csv("data/Embedding.csv")  # Mappings
+method_df = pd.read_csv("data/Method.csv", header=None, names=["unique_identifier", "method"])  # Unique identifier → Method
+testcase_df = pd.read_csv("data/Testcases.csv", header=None, names=["unique_identifier", "testcase"])  # Unique identifier → Test case
+method_vs_testcase_df = pd.read_csv("data/Embedding.csv", header=None, names=["method_id", "testcase_id(s)"])  # Mappings
 
 # Fetch PR changes from GitHub
 def get_pr_changes(repo_name, pr_number):
