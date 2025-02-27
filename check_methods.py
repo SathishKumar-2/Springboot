@@ -22,6 +22,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 PR_NUMBER = sys.argv[1]
+print("PR number provided!"+PR_NUMBER)
 
 # Fetch PR changes from GitHub
 def get_pr_changes(repo_name, pr_number):
