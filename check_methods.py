@@ -9,16 +9,16 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_NAME = os.getenv("GITHUB_REPOSITORY")  # 'owner/repo'
 
 if not GITHUB_TOKEN:
-    print("❌ Error: GITHUB_TOKEN is not set!")
+    print("Error: GITHUB_TOKEN is not set!")
     sys.exit(1)
 
 if not REPO_NAME:
-    print("❌ Error: REPO_NAME is not set!")
+    print("Error: REPO_NAME is not set!")
     sys.exit(1)
 
 # Get PR number dynamically from command-line argument
 if len(sys.argv) < 2:
-    print("❌ Error: PR number not provided!")
+    print("Error: PR number not provided!")
     sys.exit(1)
 
 PR_NUMBER = sys.argv[1]
@@ -36,7 +36,7 @@ def get_pr_changes(repo_name, pr_number):
     response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
-        print("❌ Error fetching PR data:", response.json())
+        print("Error fetching PR data:", response.json())
         sys.exit(1)
 
     files = response.json()
@@ -136,4 +136,4 @@ if changed_methods:
     for method, testcases in method_test_cases.items():
         print(f"🔹 `{method}` → 🧪 Test Cases: {', '.join(testcases) if testcases else 'None found'}")
 else:
-    print("✅ No changed methods found.")
+    print("No changed methods found.")
